@@ -1,9 +1,21 @@
 import{Author} from "./models/author";
 import{Post} from "./models/post";
-import { Module } from "module";
+
 const fs = require('fs');
 var constants = require("./constants");
 const uuidv4 = require('uuid/v4');
+
+// Upload Image Logic
+async function uploadImage(imageFileName){
+    let filename;
+    await imageFileName.then(res =>{
+        filename =   (uuidv4()) +'-'+res.filename;
+        imageFileName = `${__dirname}/../staticFiles/images/${filename}`;
+        const fileStream = res.createReadStream();
+        fileStream.pipe(fs.createWriteStream(imageFileName));
+    }).catch(err => { throw err});
+    return imageFileName;
+}
 
 export const resolvers = {
     Query:{
@@ -31,14 +43,8 @@ export const resolvers = {
         // then the post will be added 
         createPost: async(_, { title,body,imageFileName,published,authors })=>{
             let listOfAuthors = [];
-            let filename;
-            imageFileName.then(res =>{
-                filename =   (uuidv4()) +'-'+res.filename;
-                imageFileName = `${__dirname}/../staticFiles/images/${filename}`;
-                const fileStream = res.createReadStream();
-                fileStream.pipe(fs.createWriteStream(imageFileName));
-            }).catch(err => { throw err});
-           
+            imageFileName = await uploadImage(imageFileName);
+
             for (let i = 0; i< authors.length; i++){
                 if(authors[i].id){
                     authors[i] = {_id:authors[i].id};
@@ -58,16 +64,32 @@ export const resolvers = {
             return Post.find({authors:id});
         },
        
-        //every author can update any post and he/she will be also an author of this post 
-        updatePost: async(__dirname, { postID,authorID,title,body,imageFileName,published })=>{
+        // every author can update any post and he/she will be also an author of this post 
+        // imageFileName will not be required in the update function if the frontend want to upload anew photo 
+        // he/she will pass it else the old image will still be there. 
+        updatePost: async(_, { postID,authorID,title,body,imageFileName,published })=>{
             const oldPost = await Post.findById(postID).populate();
-            let newAuthours = oldPost.authors;
-            //validate over same author not add it again
-            /*for (let i = 0; i < array.length; i++) {
-                const element = array[i];
-                
-            }*/
-            newAuthours.push(authorID);
+            let oldAuthours = oldPost.authors;
+            //validate >> already author not add him/her again.
+            let newAuthours = [];
+            let exist = false;
+            for (let i = 0; i < oldAuthours.length; i++) {
+                const singleOldAuthor = oldAuthours[i];
+                if (singleOldAuthor == authorID){
+                    exist = true;
+                }
+            }
+            newAuthours = oldAuthours;
+            if(exist == false){
+                newAuthours.push(authorID);
+            }
+
+            if(imageFileName){
+                imageFileName = await uploadImage(imageFileName);
+            }else{
+                imageFileName = oldPost.imageFileName;
+            }
+
             const update = { title: title, body: body, imageFileName: imageFileName, published: published, authors:newAuthours };
             await oldPost.updateOne(update);
 
