@@ -10,7 +10,7 @@
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
  - clone project
- - Database credintials are stored in .env file and customize for testing purpose.
+ - Database credentials are stored in .env file and customize for testing purpose.
  - install node_modules "npm install"
  - start server "npm run start"
 
