@@ -42,22 +42,29 @@ export const resolvers = {
         // else this new authour will be added in authors 
         // then the post will be added 
         createPost: async(_, { title,body,imageFileName,published,authors })=>{
-            let listOfAuthors = [];
-            imageFileName = await uploadImage(imageFileName);
 
-            for (let i = 0; i< authors.length; i++){
-                if(authors[i].id){
-                    authors[i] = {_id:authors[i].id};
-                }else{
-                    authors[i] = new Author(authors[i]);
-                    listOfAuthors.push(authors[i]);
+            if(authors.length == 0){
+                let err = new Error();
+                err.message = "author not passed!!!";
+                throw err;
+            }else{
+                let listOfAuthors = [];
+                imageFileName = await uploadImage(imageFileName);
+    
+                for (let i = 0; i< authors.length; i++){
+                    if(authors[i].id){
+                        authors[i] = {_id:authors[i].id};
+                    }else{
+                        authors[i] = new Author(authors[i]);
+                        listOfAuthors.push(authors[i]);
+                    }
                 }
-            }
-            await Author.insertMany(listOfAuthors);
-            const aPost = new Post({title,body,imageFileName,published,authors});
-            await aPost.save();
-
-            return  Post.findById(aPost).populate("authors");
+                await Author.insertMany(listOfAuthors);
+                const aPost = new Post({title,body,imageFileName,published,authors});
+                await aPost.save();
+    
+                return  Post.findById(aPost).populate("authors");
+            }    
         },
         //get post but filter by authorID
         getPostByAuthorFiltering: async(__dirname, { id })=>{
@@ -88,6 +95,18 @@ export const resolvers = {
                 imageFileName = await uploadImage(imageFileName);
             }else{
                 imageFileName = oldPost.imageFileName;
+            }
+
+            if(!title){
+                title = oldPost.title;
+            }
+
+            if(!body){
+                body = oldPost.body;
+            }
+
+            if(!published){
+                published = oldPost.published;
             }
 
             const update = { title: title, body: body, imageFileName: imageFileName, published: published, authors:newAuthours };

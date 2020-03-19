@@ -41,7 +41,7 @@ type Mutation{
     createAuthor(name: String!): Author!,
     createPost(title:String!,body:String!,imageFileName:Upload!,published:Boolean!,authors:[inputAuthor!]!): Post!,
     getPostByAuthorFiltering(id: ID!): [Post!]!,
-    updatePost(postID:ID! ,authorID:ID! ,title:String! ,body:String! ,imageFileName: Upload ,published:Boolean!): Post!,
+    updatePost(postID:ID! ,authorID:ID! ,title:String ,body:String ,imageFileName: Upload ,published:Boolean): Post!,
 }
 
 `;
